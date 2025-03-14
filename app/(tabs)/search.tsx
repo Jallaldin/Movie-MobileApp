@@ -1,16 +1,16 @@
 import {View, Text, Image, FlatList, ActivityIndicator} from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {images} from "@/constants/images";
+import {icons} from "@/constants/icons";
 import MovieCard from "@/components/MovieCard";
 import useFetch from "@/services/useFetch";
 import {fetchMovies} from "@/services/api";
-import {icons} from "@/constants/icons";
 import SearchBar from "@/components/searchBar";
 import {updateSearchCount} from "@/services/appwrite";
 
 
 const Search = () => {
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState("")
 
     const {
         data: movies,
@@ -22,14 +22,17 @@ const Search = () => {
         query: searchQuery
     }), false)
 
+    // Debounced search effect
     useEffect(() => {
-        updateSearchCount(searchQuery, movies[0]);
 
         const timeoutId = setTimeout(async() => {
         if(searchQuery.trim()) {
             await loadMovies()
-        }
-        else {
+            console.log('Search Query: ', searchQuery)
+            console.log('First Movie', movies?.[0])
+            // Call updateSearchCount only if there are results
+
+        } else {
             reset()
         }
     }, 500);
@@ -37,16 +40,23 @@ const Search = () => {
         return () => clearTimeout(timeoutId)
     }, [searchQuery])
 
+    useEffect(() => {
+        if (movies?.length > 0 && movies?.[0]) {
+            console.log('Calling updateSearchCount with:', { searchQuery, movie: movies[0] })
+            updateSearchCount(searchQuery, movies[0]);
+        }
+    }, [movies]);
+
   return (
     <View className="flex-1 bg-primary">
         <Image source={images.bg} className="flex-1 absolute w-full z-0" resizeMode="cover"
             />
 
         <FlatList
+            className="px-5"
             data={movies}
             renderItem={({item}) => <MovieCard {...item} />}
             keyExtractor={(item) => item.id.toString()}
-            className="px-5"
             numColumns={3}
             columnWrapperStyle={{
                 justifyContent: 'center',
